@@ -346,10 +346,10 @@ export function getUserAvatarColors(userId: string): { outer: string; inner: str
 }
 
 export const avatarColorOptions = [
-  { label: "ブルー", outer: "from-blue-400 to-cyan-500", inner: "from-purple-400 to-pink-500" },
-  { label: "ピンク", outer: "from-pink-400 to-rose-500", inner: "from-yellow-400 to-orange-500" },
-  { label: "グリーン", outer: "from-green-400 to-emerald-500", inner: "from-cyan-400 to-teal-500" },
-  { label: "パープル", outer: "from-purple-400 to-pink-500", inner: "from-orange-400 to-red-500" },
-  { label: "オレンジ", outer: "from-orange-400 to-red-500", inner: "from-green-400 to-emerald-500" },
-  { label: "シアン", outer: "from-cyan-400 to-teal-500", inner: "from-pink-400 to-rose-500" },
+  { label: "ブルー", outer: "from-blue-400 to-cyan-500", inner: "from-blue-400 to-cyan-500" },
+  { label: "ピンク", outer: "from-pink-400 to-rose-500", inner: "from-pink-400 to-rose-500" },
+  { label: "グリーン", outer: "from-green-400 to-emerald-500", inner: "from-green-400 to-emerald-500" },
+  { label: "パープル", outer: "from-purple-400 to-pink-500", inner: "from-purple-400 to-pink-500" },
+  { label: "オレンジ", outer: "from-orange-400 to-red-500", inner: "from-orange-400 to-red-500" },
+  { label: "シアン", outer: "from-cyan-400 to-teal-500", inner: "from-cyan-400 to-teal-500" },
 ]
