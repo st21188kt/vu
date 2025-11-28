@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil, Check, X, ChevronRight, Trophy, Flame, User } from "lucide-react";
+import {
+    Pencil,
+    Check,
+    X,
+    ChevronRight,
+    Trophy,
+    Flame,
+    User,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
     useStore,
@@ -94,7 +102,10 @@ export function AccountPage() {
                                         store.currentUserAvatarInnerColor
                                     } flex items-center justify-center`}
                                 >
-                                    <User className="w-10 h-10 text-white" strokeWidth={1.5} />
+                                    <User
+                                        className="w-10 h-10 text-white"
+                                        strokeWidth={1.5}
+                                    />
                                 </div>
                             </div>
                         </div>
