@@ -23,7 +23,7 @@ const generateGaussianRandom = (mean: number = 0, stddev: number = 1): number =>
 }
 
 
-const initializeGenreScores = (): GenreScore[] => {
+export const initializeGenreScores = (): GenreScore[] => {
     // ガウス分布に従う4つのランダム値を生成
     const gaussianValues = [
         generateGaussianRandom(0, 1),
