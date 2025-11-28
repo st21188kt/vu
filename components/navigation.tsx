@@ -9,7 +9,7 @@ interface NavigationProps {
   onRequestActivity: () => void
 }
 
-export function Navigation({ activeTab, onTabChange, onRequestActivity }: NavigationProps) {
+export function Navigation({ activeTab, onTabChange }: NavigationProps) {
   return (
     <header className="sticky top-0 z-50 glass border-b border-border/50">
       <div className="max-w-2xl mx-auto px-4">

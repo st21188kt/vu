@@ -13,6 +13,8 @@ export interface Activity {
   userId: string
   userName: string
   userAvatar: string
+  userAvatarOuterColor?: string
+  userAvatarInnerColor?: string
   createdAt: Date
   likes: number
   likedBy: string[]
@@ -22,15 +24,24 @@ export interface Rank {
   name: string
   minCount: number
   color: string
+  textColor: string
+}
+
+export interface UserProfile {
+  id: string
+  name: string
+  avatar: string
+  avatarOuterColor: string
+  avatarInnerColor: string
 }
 
 export const ranks: Rank[] = [
-  { name: "ビギナー", minCount: 0, color: "from-gray-400 to-gray-500" },
-  { name: "チャレンジャー", minCount: 5, color: "from-green-400 to-emerald-500" },
-  { name: "アクティブ", minCount: 15, color: "from-blue-400 to-cyan-500" },
-  { name: "エキスパート", minCount: 30, color: "from-purple-400 to-pink-500" },
-  { name: "マスター", minCount: 50, color: "from-yellow-400 to-orange-500" },
-  { name: "レジェンド", minCount: 100, color: "from-rose-400 to-red-500" },
+  { name: "ビギナー", minCount: 0, color: "from-gray-500 to-gray-700", textColor: "text-gray-600" },
+  { name: "チャレンジャー", minCount: 5, color: "from-green-400 to-emerald-500", textColor: "text-green-500" },
+  { name: "アクティブ", minCount: 15, color: "from-blue-400 to-cyan-500", textColor: "text-cyan-500" },
+  { name: "エキスパート", minCount: 30, color: "from-purple-400 to-pink-500", textColor: "text-pink-500" },
+  { name: "マスター", minCount: 50, color: "from-yellow-400 to-orange-500", textColor: "text-orange-500" },
+  { name: "レジェンド", minCount: 100, color: "from-rose-400 to-red-500", textColor: "text-red-500" },
 ]
 
 export const activitySuggestions: Array<{ text: string; category: GenreType; icon: string }> = [
@@ -66,16 +77,10 @@ interface Store {
   currentUserId: string
   currentUserName: string
   currentUserAvatar: string
+  currentUserAvatarOuterColor: string
+  currentUserAvatarInnerColor: string
   likedActivityIds: string[]
 }
-
-// サンプルユーザーデータ
-const sampleUsers = [
-  { id: "user1", name: "田中太郎", avatar: "/japanese-man-avatar.png" },
-  { id: "user2", name: "佐藤花子", avatar: "/japanese-woman-avatar.png" },
-  { id: "user3", name: "鈴木一郎", avatar: "/japanese-young-man-avatar.jpg" },
-  { id: "user4", name: "高橋美咲", avatar: "/japanese-young-woman-avatar.jpg" },
-]
 
 // 初期サンプルアクティビティ
 const initialActivities: Activity[] = [
@@ -85,7 +90,9 @@ const initialActivities: Activity[] = [
     category: "MOVE",
     userId: "user1",
     userName: "田中太郎",
-    userAvatar: "/japanese-man-avatar.png",
+    userAvatar: "/default-user-avatar.png",
+    userAvatarOuterColor: "from-blue-400 to-cyan-500",
+    userAvatarInnerColor: "from-purple-400 to-pink-500",
     createdAt: new Date(Date.now() - 1000 * 60 * 30),
     likes: 12,
     likedBy: ["user2", "user3"],
@@ -96,7 +103,9 @@ const initialActivities: Activity[] = [
     category: "RELAX",
     userId: "user2",
     userName: "佐藤花子",
-    userAvatar: "/japanese-woman-avatar.png",
+    userAvatar: "/default-user-avatar.png",
+    userAvatarOuterColor: "from-pink-400 to-rose-500",
+    userAvatarInnerColor: "from-yellow-400 to-orange-500",
     createdAt: new Date(Date.now() - 1000 * 60 * 60),
     likes: 8,
     likedBy: ["user1"],
@@ -107,7 +116,9 @@ const initialActivities: Activity[] = [
     category: "CREATIVE",
     userId: "user3",
     userName: "鈴木一郎",
-    userAvatar: "/japanese-young-man-avatar.jpg",
+    userAvatar: "/default-user-avatar.png",
+    userAvatarOuterColor: "from-green-400 to-emerald-500",
+    userAvatarInnerColor: "from-cyan-400 to-teal-500",
     createdAt: new Date(Date.now() - 1000 * 60 * 120),
     likes: 15,
     likedBy: ["user1", "user2", "user4"],
@@ -118,7 +129,9 @@ const initialActivities: Activity[] = [
     category: "MUSIC",
     userId: "user4",
     userName: "高橋美咲",
-    userAvatar: "/japanese-young-woman-avatar.jpg",
+    userAvatar: "/default-user-avatar.png",
+    userAvatarOuterColor: "from-purple-400 to-pink-500",
+    userAvatarInnerColor: "from-orange-400 to-red-500",
     createdAt: new Date(Date.now() - 1000 * 60 * 180),
     likes: 6,
     likedBy: [],
@@ -129,7 +142,9 @@ const initialActivities: Activity[] = [
     category: "MOVE",
     userId: "user1",
     userName: "田中太郎",
-    userAvatar: "/japanese-man-avatar.png",
+    userAvatar: "/default-user-avatar.png",
+    userAvatarOuterColor: "from-blue-400 to-cyan-500",
+    userAvatarInnerColor: "from-purple-400 to-pink-500",
     createdAt: new Date(Date.now() - 1000 * 60 * 240),
     likes: 10,
     likedBy: ["user2"],
@@ -141,6 +156,8 @@ let store: Store = {
   currentUserId: "me",
   currentUserName: "あなた",
   currentUserAvatar: "/default-user-avatar.png",
+  currentUserAvatarOuterColor: "from-blue-400 to-cyan-500",
+  currentUserAvatarInnerColor: "from-purple-400 to-pink-500",
   likedActivityIds: [],
 }
 
@@ -194,12 +211,12 @@ export function toggleLike(activityId: string) {
     activities: store.activities.map((a) =>
       a.id === activityId
         ? {
-            ...a,
-            likes: isLiked ? a.likes - 1 : a.likes + 1,
-            likedBy: isLiked
-              ? a.likedBy.filter((id) => id !== store.currentUserId)
-              : [...a.likedBy, store.currentUserId],
-          }
+          ...a,
+          likes: isLiked ? a.likes - 1 : a.likes + 1,
+          likedBy: isLiked
+            ? a.likedBy.filter((id) => id !== store.currentUserId)
+            : [...a.likedBy, store.currentUserId],
+        }
         : a,
     ),
   }
@@ -295,3 +312,44 @@ export function getRandomActivity(): { text: string; category: GenreType } {
   const activity = candidates[Math.floor(Math.random() * candidates.length)]
   return { text: activity.text, category: activity.category }
 }
+
+export function updateUserAvatarColors(outerColor: string, innerColor: string) {
+  store = {
+    ...store,
+    currentUserAvatarOuterColor: outerColor,
+    currentUserAvatarInnerColor: innerColor,
+    activities: store.activities.map((a) =>
+      a.userId === store.currentUserId
+        ? { ...a, userAvatarOuterColor: outerColor, userAvatarInnerColor: innerColor }
+        : a,
+    ),
+  }
+  emitChange()
+}
+
+export function getUserAvatarColors(userId: string): { outer: string; inner: string } {
+  if (userId === store.currentUserId) {
+    return {
+      outer: store.currentUserAvatarOuterColor,
+      inner: store.currentUserAvatarInnerColor,
+    }
+  }
+  // Find from activities
+  const activity = store.activities.find((a) => a.userId === userId)
+  if (activity) {
+    return {
+      outer: activity.userAvatarOuterColor || "from-gray-400 to-gray-500",
+      inner: activity.userAvatarInnerColor || "from-gray-400 to-gray-500",
+    }
+  }
+  return { outer: "from-gray-400 to-gray-500", inner: "from-gray-400 to-gray-500" }
+}
+
+export const avatarColorOptions = [
+  { label: "ブルー", outer: "from-blue-400 to-cyan-500", inner: "from-blue-400 to-cyan-500" },
+  { label: "ピンク", outer: "from-pink-400 to-rose-500", inner: "from-pink-400 to-rose-500" },
+  { label: "グリーン", outer: "from-green-400 to-emerald-500", inner: "from-green-400 to-emerald-500" },
+  { label: "パープル", outer: "from-purple-400 to-pink-500", inner: "from-purple-400 to-pink-500" },
+  { label: "オレンジ", outer: "from-orange-400 to-red-500", inner: "from-orange-400 to-red-500" },
+  { label: "シアン", outer: "from-cyan-400 to-teal-500", inner: "from-cyan-400 to-teal-500" },
+]
