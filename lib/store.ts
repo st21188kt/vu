@@ -1,11 +1,15 @@
 "use client"
 
 import { useSyncExternalStore } from "react"
+import type { GenreType } from "@/types/genre"
+import { selectGenre } from "@/utils/selection"
+import { genreBandit, initializeGenreScores } from "@/utils/genreBandit"
+import { loadGenreScores, saveGenreScores } from "@/utils/storage"
 
 export interface Activity {
   id: string
   text: string
-  category: string // カテゴリを追加
+  category: GenreType
   userId: string
   userName: string
   userAvatar: string
@@ -29,37 +33,32 @@ export const ranks: Rank[] = [
   { name: "レジェンド", minCount: 100, color: "from-rose-400 to-red-500" },
 ]
 
-export const activitySuggestions = [
-  { text: "散歩に出かける", category: "運動", icon: "🚶" },
-  { text: "本を30分読む", category: "学習", icon: "📚" },
-  { text: "新しいレシピを試す", category: "料理", icon: "🍳" },
-  { text: "友達に連絡する", category: "交流", icon: "💬" },
-  { text: "部屋を掃除する", category: "生活", icon: "🧹" },
-  { text: "15分瞑想する", category: "リラックス", icon: "🧘" },
-  { text: "写真を撮りに行く", category: "クリエイティブ", icon: "📷" },
-  { text: "日記を書く", category: "クリエイティブ", icon: "✍️" },
-  { text: "植物に水をやる", category: "生活", icon: "🌱" },
-  { text: "ストレッチをする", category: "運動", icon: "🤸" },
-  { text: "新しい音楽を聴く", category: "リラックス", icon: "🎵" },
-  { text: "映画を観る", category: "リラックス", icon: "🎬" },
-  { text: "手紙を書く", category: "交流", icon: "💌" },
-  { text: "絵を描く", category: "クリエイティブ", icon: "🎨" },
-  { text: "コーヒーを淹れる", category: "生活", icon: "☕" },
-  { text: "早起きする", category: "生活", icon: "🌅" },
-  { text: "夜空を眺める", category: "リラックス", icon: "🌙" },
-  { text: "お菓子を作る", category: "料理", icon: "🍰" },
-  { text: "語学の勉強をする", category: "学習", icon: "🌍" },
-  { text: "ジョギングをする", category: "運動", icon: "🏃" },
+export const activitySuggestions: Array<{ text: string; category: GenreType; icon: string }> = [
+  { text: "散歩に出かける", category: "MOVE", icon: "🚶" },
+  { text: "15分瞑想する", category: "RELAX", icon: "🧘" },
+  { text: "写真を撮りに行く", category: "CREATIVE", icon: "📷" },
+  { text: "日記を書く", category: "CREATIVE", icon: "✍️" },
+  { text: "新しい音楽を聴く", category: "MUSIC", icon: "🎵" },
+  { text: "映画を観る", category: "RELAX", icon: "🎬" },
+  { text: "絵を描く", category: "CREATIVE", icon: "🎨" },
+  { text: "ストレッチをする", category: "MOVE", icon: "🤸" },
+  { text: "夜空を眺める", category: "RELAX", icon: "🌙" },
+  { text: "ジョギングをする", category: "MOVE", icon: "🏃" },
+  { text: "瞑想音楽を聴く", category: "MUSIC", icon: "🎧" },
+  { text: "ダンスをする", category: "MOVE", icon: "💃" },
+  { text: "楽器を練習する", category: "MUSIC", icon: "🎸" },
+  { text: "創作活動をする", category: "CREATIVE", icon: "🖌️" },
+  { text: "リラックスティーを飲む", category: "RELAX", icon: "🍵" },
+  { text: "ハイキングに行く", category: "MOVE", icon: "🥾" },
+  { text: "ヨガをする", category: "MOVE", icon: "🤸‍♀️" },
+  { text: "音声録音をする", category: "MUSIC", icon: "🎤" },
 ]
 
-export const categoryIcons: Record<string, { icon: string; color: string }> = {
-  運動: { icon: "🏃", color: "from-green-400 to-emerald-500" },
-  学習: { icon: "📚", color: "from-blue-400 to-indigo-500" },
-  料理: { icon: "🍳", color: "from-orange-400 to-red-500" },
-  交流: { icon: "💬", color: "from-pink-400 to-rose-500" },
-  生活: { icon: "🏠", color: "from-amber-400 to-yellow-500" },
-  リラックス: { icon: "🧘", color: "from-purple-400 to-violet-500" },
-  クリエイティブ: { icon: "🎨", color: "from-cyan-400 to-teal-500" },
+export const categoryIcons: Record<GenreType, { icon: string; color: string; label: string }> = {
+  MOVE: { icon: "🏃", color: "from-green-400 to-emerald-500", label: "動く" },
+  RELAX: { icon: "🧘", color: "from-purple-400 to-violet-500", label: "リラックス" },
+  CREATIVE: { icon: "🎨", color: "from-cyan-400 to-teal-500", label: "クリエイティブ" },
+  MUSIC: { icon: "🎵", color: "from-pink-400 to-rose-500", label: "音楽" },
 }
 
 interface Store {
@@ -83,7 +82,7 @@ const initialActivities: Activity[] = [
   {
     id: "1",
     text: "散歩に出かける",
-    category: "運動",
+    category: "MOVE",
     userId: "user1",
     userName: "田中太郎",
     userAvatar: "/japanese-man-avatar.png",
@@ -93,8 +92,8 @@ const initialActivities: Activity[] = [
   },
   {
     id: "2",
-    text: "本を30分読む",
-    category: "学習",
+    text: "瞑想する",
+    category: "RELAX",
     userId: "user2",
     userName: "佐藤花子",
     userAvatar: "/japanese-woman-avatar.png",
@@ -104,8 +103,8 @@ const initialActivities: Activity[] = [
   },
   {
     id: "3",
-    text: "新しいレシピを試す",
-    category: "料理",
+    text: "絵を描く",
+    category: "CREATIVE",
     userId: "user3",
     userName: "鈴木一郎",
     userAvatar: "/japanese-young-man-avatar.jpg",
@@ -115,8 +114,8 @@ const initialActivities: Activity[] = [
   },
   {
     id: "4",
-    text: "15分瞑想する",
-    category: "リラックス",
+    text: "新しい音楽を聴く",
+    category: "MUSIC",
     userId: "user4",
     userName: "高橋美咲",
     userAvatar: "/japanese-young-woman-avatar.jpg",
@@ -126,8 +125,8 @@ const initialActivities: Activity[] = [
   },
   {
     id: "5",
-    text: "部屋を掃除する",
-    category: "生活",
+    text: "ストレッチをする",
+    category: "MOVE",
     userId: "user1",
     userName: "田中太郎",
     userAvatar: "/japanese-man-avatar.png",
@@ -162,7 +161,7 @@ export function getSnapshot() {
   return store
 }
 
-export function addActivity(text: string, category: string) {
+export function addActivity(text: string, category: GenreType) {
   const newActivity: Activity = {
     id: Date.now().toString(),
     text,
@@ -237,32 +236,62 @@ export function getNextRankInfo(activityCount: number): { nextRank: Rank | null;
   return { nextRank, remaining: nextRank.minCount - activityCount }
 }
 
-export function getMostFrequentCategory(activities: Activity[]): string | null {
+export function getMostFrequentCategory(activities: Activity[]): GenreType | null {
   const userActivities = activities.filter((a) => a.userId === store.currentUserId)
   if (userActivities.length === 0) return null
 
-  const categoryCount: Record<string, number> = {}
+  const categoryCount: Record<GenreType, number> = {
+    RELAX: 0,
+    MOVE: 0,
+    CREATIVE: 0,
+    MUSIC: 0,
+  }
   userActivities.forEach((a) => {
-    categoryCount[a.category] = (categoryCount[a.category] || 0) + 1
+    categoryCount[a.category]++
   })
 
-  let maxCategory = ""
+  let maxCategory: GenreType = "RELAX"
   let maxCount = 0
   Object.entries(categoryCount).forEach(([category, count]) => {
     if (count > maxCount) {
       maxCount = count
-      maxCategory = category
+      maxCategory = category as GenreType
     }
   })
 
-  return maxCategory || null
+  return maxCount > 0 ? maxCategory : null
 }
 
 export function useStore() {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
 
-export function getRandomActivity(): { text: string; category: string } {
-  const activity = activitySuggestions[Math.floor(Math.random() * activitySuggestions.length)]
+export function getRandomActivity(): { text: string; category: GenreType } {
+  // current genre scores を localStorage から読み込む
+  let genreScores = loadGenreScores("genreScores")
+
+  // 存在しない場合は初期化して保存
+  if (genreScores === null) {
+    const initialized = initializeGenreScores()
+    saveGenreScores("genreScores", initialized)
+    genreScores = initialized
+  }
+
+  // 確率分布に基づきジャンルを選択
+  const selected = selectGenre(genreScores!)
+
+  // 選択されたジャンルで bandit を実行して更新（genreBandit は内部で保存する）
+  const updated = genreBandit(selected.key)
+
+  // 念のため最新のスコアを保存
+  saveGenreScores("genreScores", updated)
+
+  // 選択されたジャンルに一致するアクティビティをランダムに返す
+  const candidates = activitySuggestions.filter((a) => a.category === selected.key)
+  if (candidates.length === 0) {
+    const fallback = activitySuggestions[Math.floor(Math.random() * activitySuggestions.length)]
+    return { text: fallback.text, category: fallback.category }
+  }
+  const activity = candidates[Math.floor(Math.random() * candidates.length)]
   return { text: activity.text, category: activity.category }
 }

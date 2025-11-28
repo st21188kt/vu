@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react"
 import { X, RefreshCw, Check, Sparkles } from "lucide-react"
 import { getRandomActivity, addActivity, categoryIcons } from "@/lib/store"
+import type { GenreType } from "@/types/genre"
 import { cn } from "@/lib/utils"
 
 interface ActivityRequestModalProps {
@@ -11,7 +12,7 @@ interface ActivityRequestModalProps {
 }
 
 export function ActivityRequestModal({ isOpen, onClose }: ActivityRequestModalProps) {
-  const [currentActivity, setCurrentActivity] = useState<{ text: string; category: string }>(getRandomActivity())
+  const [currentActivity, setCurrentActivity] = useState<{ text: string; category: GenreType }>(getRandomActivity())
   const [isSpinning, setIsSpinning] = useState(false)
 
   const handleRetry = useCallback(() => {
