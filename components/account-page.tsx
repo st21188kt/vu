@@ -38,14 +38,17 @@ export function AccountPage() {
     const myActivities = store.activities.filter(
         (a) => a.userId === store.currentUserId
     );
+    const likedActivities = store.activities.filter((a) =>
+        store.likedActivityIds.includes(a.id)
+    );
     const activityCount = myActivities.length;
     const currentRank = getCurrentRank(activityCount);
     const { nextRank, remaining } = getNextRankInfo(activityCount);
     const mostFrequentCategory = getMostFrequentCategory(store.activities);
 
     const displayedActivities = showAllHistory
-        ? myActivities
-        : myActivities.slice(0, 3);
+        ? likedActivities
+        : likedActivities.slice(0, 3);
 
     const handleSaveName = () => {
         if (editName.trim()) {
@@ -316,7 +319,12 @@ export function AccountPage() {
                             累計実行回数
                         </span>
                     </div>
-                    <p className="text-3xl font-black gradient-instagram-text">
+                    <p
+                        className={cn(
+                            "text-3xl font-black",
+                            currentRank.textColor
+                        )}
+                    >
                         {activityCount}
                         <span className="text-lg font-medium text-muted-foreground ml-1">
                             回
@@ -332,7 +340,12 @@ export function AccountPage() {
                     </div>
                     {nextRank ? (
                         <>
-                            <p className="text-3xl font-black gradient-instagram-text">
+                            <p
+                                className={cn(
+                                    "text-3xl font-black",
+                                    currentRank.textColor
+                                )}
+                            >
                                 {remaining}
                                 <span className="text-lg font-medium text-muted-foreground ml-1">
                                     回
@@ -386,9 +399,9 @@ export function AccountPage() {
             {/* 最近のアクティビティ履歴 */}
             <div className="card-gradient rounded-2xl p-5">
                 <h3 className="text-sm font-medium text-muted-foreground mb-4">
-                    最近のアクティビティ
+                    いいねした投稿
                 </h3>
-                {myActivities.length > 0 ? (
+                {likedActivities.length > 0 ? (
                     <>
                         <div className="space-y-3">
                             {displayedActivities.map((activity) => (
@@ -421,7 +434,7 @@ export function AccountPage() {
                                 </div>
                             ))}
                         </div>
-                        {myActivities.length > 3 && (
+                        {likedActivities.length > 3 && (
                             <button
                                 onClick={() =>
                                     setShowAllHistory(!showAllHistory)
@@ -431,7 +444,7 @@ export function AccountPage() {
                                 {showAllHistory
                                     ? "閉じる"
                                     : `もっと見る (${
-                                          myActivities.length - 3
+                                          likedActivities.length - 3
                                       }件)`}
                                 <ChevronRight
                                     className={cn(
@@ -444,7 +457,7 @@ export function AccountPage() {
                     </>
                 ) : (
                     <p className="text-center text-muted-foreground py-8">
-                        まだアクティビティがありません
+                        いいねした投稿はまだありません
                     </p>
                 )}
             </div>

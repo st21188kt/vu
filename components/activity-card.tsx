@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Heart, MessageCircle, Send, Bookmark, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Activity } from "@/lib/store";
@@ -27,11 +27,11 @@ function formatTimeAgo(date: Date): string {
 }
 
 const activityColors = [
-    "from-orange-400 to-pink-500",
-    "from-purple-400 to-pink-500",
-    "from-blue-400 to-purple-500",
-    "from-green-400 to-blue-500",
-    "from-yellow-400 to-orange-500",
+    "from-gray-500 to-gray-700",
+    "from-gray-600 to-gray-800",
+    "from-gray-400 to-gray-600",
+    "from-gray-700 to-gray-900",
+    "from-gray-500 to-gray-800",
 ];
 
 export function ActivityCard({
@@ -41,10 +41,19 @@ export function ActivityCard({
     index = 0,
 }: ActivityCardProps) {
     const [isAnimating, setIsAnimating] = useState(false);
+    const [timeAgo, setTimeAgo] = useState(formatTimeAgo(activity.createdAt));
     const categoryInfo = categoryIcons[activity.category];
     const colorClass =
         categoryInfo?.color || activityColors[index % activityColors.length];
     const userColors = getUserAvatarColors(activity.userId);
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setTimeAgo(formatTimeAgo(activity.createdAt));
+        }, 60000);
+
+        return () => clearInterval(interval);
+    }, [activity.createdAt]);
 
     const handleLike = () => {
         if (!isLiked) {
@@ -76,9 +85,7 @@ export function ActivityCard({
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm">{activity.userName}</p>
-                    <p className="text-xs text-muted-foreground">
-                        {formatTimeAgo(activity.createdAt)}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{timeAgo}</p>
                 </div>
                 {activity.category && (
                     <span className="text-xs px-2.5 py-1 rounded-full bg-secondary text-muted-foreground font-medium">
