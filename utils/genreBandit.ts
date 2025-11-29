@@ -5,10 +5,22 @@ const softmax = (genreScores: GenreScore[]): GenreScore[] => {
     const values = genreScores.map((item) => item.value)
 
     const maxValue = Math.max(...values)
-    const exps = values.map((value) => Math.exp(value - maxValue))
+    const exps = values.map((value) => {
+        const exp = Math.exp(value - maxValue)
+        // 数値オーバーフロー対策
+        return isFinite(exp) ? exp : 0
+    })
 
     const sumExps = exps.reduce((sum, val) => sum + val, 0)
-    
+
+    // ゼロ除算対策
+    if (sumExps === 0) {
+        return genreScores.map((item) => ({
+            key: item.key,
+            value: 1 / genreScores.length,
+        }))
+    }
+
     return genreScores.map((item, index) => ({
         key: item.key,
         value: exps[index] / sumExps,
@@ -35,31 +47,43 @@ export const initializeGenreScores = (): GenreScore[] => {
     // genreの順序を定義
     const genres: GenreType[] = ['RELAX', 'MOVE', 'CREATIVE', 'MUSIC']
 
-    // GenreScore配列を作成
+    // GenreScore配列を作成（softmaxを適用しない、生の値を保持）
     const genreScores: GenreScore[] = genres.map((genre, index) => ({
         key: genre,
         value: gaussianValues[index],
     }))
 
-    return softmax(genreScores)
+    return genreScores
 }
 
-const updatePreference = (lr: number, genreScores: GenreScore[], genre: GenreType): GenreScore[] => {
+const updatePreference = (lr: number, genreScores: GenreScore[], genre: GenreType, reward: number = 1.0): GenreScore[] => {
     const selectionProbabilities: GenreScore[] = softmax(genreScores)
+
+    // 平均報酬を計算（簡略版：0.5を使用）
+    const avgReward = 0.5
 
     const calculatedGenreScores: GenreScore[] = genreScores.map((item, index) => ({
         key: item.key,
-        value: item.key === genre ? item.value + lr * (0.5) * (1 - selectionProbabilities[index].value) : item.value - lr * (-0.5) * selectionProbabilities[index].value,
+        value: item.key === genre
+            ? item.value + lr * (reward - avgReward) * (1 - selectionProbabilities[index].value)
+            : item.value - lr * (reward - avgReward) * selectionProbabilities[index].value,
     }))
 
-    return softmax(calculatedGenreScores)
+    // 値をクリップして数値オーバーフロー対策
+    const clippedGenreScores: GenreScore[] = calculatedGenreScores.map((item) => ({
+        key: item.key,
+        value: Math.max(-100, Math.min(100, item.value)), // -100 ~ 100 の範囲に制限
+    }))
+
+    // softmaxを適用せずに、生のスコアを返す
+    return clippedGenreScores
 }
 
 
 export const genreBandit = (genre: GenreType): GenreScore[] => {
     // localStorageから読み込み、存在しない場合は初期化
     let genreScores = loadGenreScores('genreScores')
-    
+
     if (genreScores === null) {
         genreScores = initializeGenreScores()
         saveGenreScores('genreScores', genreScores)
