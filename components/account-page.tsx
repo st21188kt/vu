@@ -149,10 +149,7 @@ export function AccountPage() {
                     const liked = allActivities.filter((a) =>
                         a.likedBy.includes(profile.id)
                     );
-                    console.log(
-                        "AccountPage: liked activities:",
-                        liked
-                    );
+                    console.log("AccountPage: liked activities:", liked);
                     setLikedActivities(liked);
                 }
             } catch (error) {
@@ -290,7 +287,10 @@ export function AccountPage() {
     const { nextRank, remaining } = getNextRankInfo(activityCount);
 
     // most_frequent_genre は文字列 (GenreType) であり、GenreScore ではない
-    const mostFrequentGenre = userProfile.most_frequent_genre === null ? "" : JSON.parse(userProfile.most_frequent_genre) as GenreScore;
+    const mostFrequentGenre =
+        userProfile.most_frequent_genre === null
+            ? ""
+            : (JSON.parse(userProfile.most_frequent_genre) as GenreScore);
 
     return (
         <div className="flex-1 p-4 space-y-6 pb-24">
@@ -650,16 +650,14 @@ export function AccountPage() {
                                     <div className="flex items-center gap-2 flex-1">
                                         <span className="text-2xl">
                                             {
-                                                categoryIcons[
-                                                    activity.category
-                                                ]?.icon
+                                                categoryIcons[activity.category]
+                                                    ?.icon
                                             }
                                         </span>
                                         <span className="text-xs font-medium bg-secondary text-muted-foreground px-2 py-1 rounded">
                                             {
-                                                categoryIcons[
-                                                    activity.category
-                                                ]?.label
+                                                categoryIcons[activity.category]
+                                                    ?.label
                                             }
                                         </span>
                                     </div>
