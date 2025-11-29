@@ -1,15 +1,89 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { ActivityCard } from "./activity-card";
-import { useStore, toggleLike } from "@/lib/store";
 import { Heart } from "lucide-react";
+import { fetchUserActivities, addLike, removeLike } from "@/lib/api";
+import { useUser } from "@/contexts/user-context";
+import type { Activity } from "@/lib/api";
 
 export function LikesPage() {
-    const store = useStore();
+    const { userId } = useUser();
+    const [likedActivities, setLikedActivities] = useState<Activity[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const likedActivities = store.activities.filter(
-        (a) => a.userId === store.currentUserId && a.likedBy.length > 0
-    );
+    const loadData = async () => {
+        if (!userId) {
+            setIsLoading(false);
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            // ユーザーの投稿を取得
+            const userActivities = await fetchUserActivities(userId);
+            // いいねされた投稿だけをフィルタ
+            const activities = userActivities.filter(
+                (a) => a.likedBy.length > 0
+            );
+            setLikedActivities(activities);
+        } catch (error) {
+            console.error("Failed to load liked activities:", error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadData();
+
+        // アクティビティ作成またはいいね変更イベントをリスン
+        const handleActivityCreated = () => {
+            console.log(
+                "Activity created or liked in likes page, reloading..."
+            );
+            loadData();
+        };
+
+        window.addEventListener("activityCreated", handleActivityCreated);
+        return () =>
+            window.removeEventListener(
+                "activityCreated",
+                handleActivityCreated
+            );
+    }, [userId]);
+
+    const handleToggleLike = async (activityId: string) => {
+        if (!userId) return;
+        const activity = likedActivities.find((a) => a.id === activityId);
+        if (!activity) return;
+
+        try {
+            const isLiked = activity.likedBy.includes(userId);
+            if (isLiked) {
+                await removeLike(userId, activityId);
+            } else {
+                await addLike(userId, activityId);
+            }
+            // 即座にデータを再取得
+            await loadData();
+            // いいね変更イベントを発火
+            window.dispatchEvent(new Event("activityCreated"));
+        } catch (error) {
+            console.error("Failed to toggle like:", error);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6">
+                    <Heart className="w-10 h-10 text-muted-foreground/50 animate-pulse" />
+                </div>
+                <p className="text-muted-foreground">読み込み中...</p>
+            </div>
+        );
+    }
 
     return (
         <div className="flex-1 flex flex-col">
@@ -46,8 +120,12 @@ export function LikesPage() {
                             <ActivityCard
                                 key={activity.id}
                                 activity={activity}
-                                isLiked={true}
-                                onToggleLike={() => toggleLike(activity.id)}
+                                isLiked={activity.likedBy.includes(
+                                    userId || ""
+                                )}
+                                onToggleLike={() =>
+                                    handleToggleLike(activity.id)
+                                }
                                 index={index}
                             />
                         ))}
