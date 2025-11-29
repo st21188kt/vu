@@ -146,7 +146,7 @@ export function AccountPage() {
 
                 // ユーザーがいいねしたアクティビティを取得
                 if (profile) {
-                    const allActivities = await fetchAllActivities(userId);
+                    const allActivities = await fetchAllActivities();
                     const liked = allActivities.filter((a) =>
                         a.likedBy.includes(profile.id)
                     );

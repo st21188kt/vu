@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { Heart, MessageCircle, Send, Bookmark, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Activity } from "@/lib/store";
-import { categoryIcons, getUserAvatarColors } from "@/lib/store";
+import type { Activity } from "@/lib/api";
+import { categoryIcons, avatarColorOptions } from "@/lib/api";
 
 interface ActivityCardProps {
     activity: Activity;
@@ -45,7 +45,15 @@ export function ActivityCard({
     const categoryInfo = categoryIcons[activity.category];
     const colorClass =
         categoryInfo?.color || activityColors[index % activityColors.length];
-    const userColors = getUserAvatarColors(activity.userId);
+
+    // ユーザーの色情報を取得（デフォルト値は0と3）
+    const outerColorId = activity.userOuterColorId ?? 0;
+    const innerColorId = activity.userInnerColorId ?? 3;
+    const outerColor =
+        avatarColorOptions[outerColorId]?.outer || "from-blue-400 to-cyan-500";
+    const innerColor =
+        avatarColorOptions[innerColorId]?.inner ||
+        "from-purple-400 to-pink-500";
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -70,11 +78,11 @@ export function ActivityCard({
         >
             <div className="flex items-center gap-3 p-4 pb-3">
                 <div
-                    className={`p-0.5 rounded-full bg-linear-to-tr ${userColors.outer}`}
+                    className={`p-0.5 rounded-full bg-linear-to-tr ${outerColor}`}
                 >
                     <div className="p-0.5 bg-card rounded-full">
                         <div
-                            className={`w-10 h-10 rounded-full bg-linear-to-br ${userColors.inner} flex items-center justify-center`}
+                            className={`w-10 h-10 rounded-full bg-linear-to-br ${innerColor} flex items-center justify-center`}
                         >
                             <User
                                 className="w-5 h-5 text-white"

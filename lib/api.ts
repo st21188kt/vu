@@ -54,6 +54,8 @@ export interface Activity {
   userId: string
   userName: string
   userAvatar: string
+  userOuterColorId?: number
+  userInnerColorId?: number
   createdAt: Date
   likes: number
   likedBy: string[]
@@ -93,7 +95,7 @@ export const avatarColorOptions = [
 /**
  * Supabase からすべてのアクティビティを取得（ユーザー情報といいね数を含む）
  */
-export async function fetchAllActivities(currentUserId?: string): Promise<Activity[]> {
+export async function fetchAllActivities(): Promise<Activity[]> {
   try {
     const { data, error } = await supabase
       .from('activities')
@@ -105,7 +107,9 @@ export async function fetchAllActivities(currentUserId?: string): Promise<Activi
         created_at,
         users:user_id (
           username,
-          avatar_url
+          avatar_url,
+          outer_color_id,
+          inner_color_id
         )
       `)
       .order('created_at', { ascending: false })
@@ -119,6 +123,8 @@ export async function fetchAllActivities(currentUserId?: string): Promise<Activi
       userId: item.user_id,
       userName: item.users?.username || 'Unknown',
       userAvatar: item.users?.avatar_url || '/default-user-avatar.png',
+      userOuterColorId: item.users?.outer_color_id,
+      userInnerColorId: item.users?.inner_color_id,
       createdAt: new Date(item.created_at),
       likes: 0,
       likedBy: [],
@@ -171,7 +177,9 @@ export async function fetchUserActivities(userId: string): Promise<Activity[]> {
         created_at,
         users:user_id (
           username,
-          avatar_url
+          avatar_url,
+          outer_color_id,
+          inner_color_id
         )
       `)
       .eq('user_id', userData.id)
@@ -186,6 +194,8 @@ export async function fetchUserActivities(userId: string): Promise<Activity[]> {
       userId: item.user_id,
       userName: item.users?.username || 'Unknown',
       userAvatar: item.users?.avatar_url || '/default-user-avatar.png',
+      userOuterColorId: item.users?.outer_color_id,
+      userInnerColorId: item.users?.inner_color_id,
       createdAt: new Date(item.created_at),
       likes: 0,
       likedBy: [],
