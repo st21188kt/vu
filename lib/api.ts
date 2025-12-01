@@ -259,10 +259,42 @@ export async function createActivity(
       throw error
     }
 
-    // activity_count を更新
+    // activity_count と most_frequent_genre を更新
+    const newActivityCount = (userData.activity_count || 0) + 1
+    
+    // most_frequent_genre を計算（新しいアクティビティを含めて）
+    const { data: allUserActivities } = await supabase
+      .from('activities')
+      .select('genre')
+      .eq('user_id', userData.id)
+
+    let mostFrequentGenre: GenreType | null = null
+    if (allUserActivities && allUserActivities.length > 0) {
+      const genreCount: Record<GenreType, number> = {
+        RELAX: 0,
+        MOVE: 0,
+        CREATIVE: 0,
+        MUSIC: 0,
+      }
+      allUserActivities.forEach((activity: any) => {
+        genreCount[activity.genre as GenreType]++
+      })
+      
+      let maxCount = 0
+      Object.entries(genreCount).forEach(([genre, count]) => {
+        if (count > maxCount) {
+          maxCount = count
+          mostFrequentGenre = genre as GenreType
+        }
+      })
+    }
+
     const { error: updateError } = await supabase
       .from('users')
-      .update({ activity_count: (userData.activity_count || 0) + 1 })
+      .update({ 
+        activity_count: newActivityCount,
+        most_frequent_genre: mostFrequentGenre,
+      })
       .eq('id', userData.id)
 
     if (updateError) {

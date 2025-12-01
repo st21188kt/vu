@@ -16,8 +16,8 @@ import {
 } from "@/lib/api";
 import { useUser } from "@/contexts/user-context";
 import { loadGenreScores } from "@/utils/storage";
-import { selectGenre } from "@/utils/selection";
 import type { Activity, DbUser } from "@/lib/api";
+import type { GenreType } from "@/types/genre";
 
 export function AccountPage() {
     const { userId, isLoading: userContextLoading } = useUser();
@@ -287,9 +287,16 @@ export function AccountPage() {
     const currentRank = getCurrentRank(activityCount);
     const { nextRank, remaining } = getNextRankInfo(activityCount);
 
-    // genreScoresをもとに最も実行するジャンルを計算
+    // localStorage から genreScores を取得し、最もスコアが高いジャンルを決定論的に選定
     const genreScores = loadGenreScores("genreScores");
-    const mostFrequentGenre = genreScores ? selectGenre(genreScores) : null;
+    let mostFrequentGenre: GenreType | null = null;
+    if (genreScores && genreScores.length > 0) {
+      // 最も高いスコアを持つジャンルを確定的に選ぶ
+      const maxGenre = genreScores.reduce((prev, current) =>
+        current.value > prev.value ? current : prev
+      );
+      mostFrequentGenre = maxGenre.key;
+    }
 
     return (
         <div className="flex-1 p-4 space-y-6 pb-24">
@@ -504,22 +511,22 @@ export function AccountPage() {
                         <div
                             className={cn(
                                 "w-20 h-20 rounded-2xl bg-linear-to-br flex items-center justify-center text-4xl shadow-lg",
-                                categoryIcons[mostFrequentGenre.key]?.color ||
+                                categoryIcons[mostFrequentGenre]?.color ||
                                     "from-gray-400 to-gray-500"
                             )}
                         >
-                            {categoryIcons[mostFrequentGenre.key]?.icon || "✨"}
+                            {categoryIcons[mostFrequentGenre]?.icon || "✨"}
                         </div>
                         <div>
                             <p className="text-2xl font-bold">
-                                {categoryIcons[mostFrequentGenre.key]?.label ||
-                                    mostFrequentGenre.key}
+                                {categoryIcons[mostFrequentGenre]?.label ||
+                                    mostFrequentGenre}
                             </p>
                             <p className="text-muted-foreground text-sm">
                                 {
                                     myActivities.filter(
                                         (a) =>
-                                            a.category === mostFrequentGenre.key
+                                            a.category === mostFrequentGenre
                                     ).length
                                 }
                                 回実行
