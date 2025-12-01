@@ -24,7 +24,11 @@ const systemMessage = (genre: GenreType, timeLabel: string, last10Activities: st
 - 以下のカテゴリに合った内容を必ず提案すること
 → ${genre}
 
-
+【カテゴリ説明】
+RELAX: 休む・静かな行動
+MOVE: 軽い運動・片付けなど、体を動かす行動
+CREATIVE: 描く・作るなど創造系の行動
+MUSIC: 音楽・リズム系の行動
 
 【過去10件の提案（禁止）】
 ${last10Activities.map((t) => `- ${t}`).join("\n")}
@@ -47,7 +51,7 @@ export async function POST(request: Request) {
                 { role: "system", content: systemMessage(genre, currentTimeLabel, last10Activities) },
                 { role: "user", content: "新しいアクティビティを提案してください。" }
             ],
-            temperature: 0.3,
+            temperature: 0.9,
             max_tokens: 50,
         });
 
