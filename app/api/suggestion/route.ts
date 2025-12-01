@@ -52,7 +52,7 @@ export async function POST(request: Request) {
                 { role: "system", content: systemMessage(genre, currentTimeLabel, last10Activities) },
                 { role: "user", content: "新しいアクティビティを提案してください。" }
             ],
-            temperature: 0.7,
+            temperature: 0.3,
             max_tokens: 50,
         });
 
