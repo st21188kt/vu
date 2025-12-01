@@ -24,12 +24,7 @@ const systemMessage = (genre: GenreType, timeLabel: string, last10Activities: st
 - 以下のカテゴリに合った内容を必ず提案すること
 → ${genre}
 
-【カテゴリ説明】
-RELAX: 休む・静かな行動
-MOVE: 軽い運動・体を動かす行動
-CREATIVE: 描く・作るなど創造系
-MUSIC: 音楽・リズム系
-REFRESH: 深呼吸・空を見るなど気分転換
+
 
 【過去10件の提案（禁止）】
 ${last10Activities.map((t) => `- ${t}`).join("\n")}
