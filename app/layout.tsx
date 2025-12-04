@@ -8,8 +8,8 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
-  title: "VU - アクティビティ提案SNS",
-  description: "ランダムなアクティビティを提案し、実行したアクティビティをシェアできるSNSアプリ",
+  title: "Ver.U",
+  description: "アクティビティを提案SNSアプリ",
   generator: "v0.app",
   icons: {
     icon: [
