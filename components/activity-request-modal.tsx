@@ -243,7 +243,7 @@ export function ActivityRequestModal({
                                         <Sparkles className="w-6 h-6 text-white animate-pulse" />
                                     </div>
                                     <p className="text-muted-foreground">
-                                        提案を取得中...
+                                        AIが提案を準備中...
                                     </p>
                                 </div>
                             </div>
@@ -266,6 +266,7 @@ export function ActivityRequestModal({
 
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div
+                key={currentActivity?.text}
                     className="w-full max-w-md animate-in fade-in zoom-in-95 duration-300"
                     role="dialog"
                     aria-modal="true"

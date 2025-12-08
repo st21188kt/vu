@@ -245,3 +245,42 @@
     animation: pulse-ring 2s ease-out infinite;
     z-index: -1;
 }
+
+/* 丸＋アイコン一緒にポンポン跳ねるアニメ */
+@keyframes bounce-together {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    25% {
+        transform: translateY(-15%);
+    }
+    50% {
+        transform: translateY(-8%);
+    }
+    75% {
+        transform: translateY(-12%);
+    }
+}
+
+.bounce-together {
+    animation: bounce-together 0.8s ease-in-out infinite;
+}
+
+@keyframes pop-from-back {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-5px) scale(1.05);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pop-from-back {
+  animation: pop-from-back 0.5s ease-out forwards;
+  transform-origin: center;
+}
