@@ -243,7 +243,7 @@ export function ActivityRequestModal({
                                         <Sparkles className="w-6 h-6 text-white animate-pulse" />
                                     </div>
                                     <p className="text-muted-foreground">
-                                        提案を取得中...
+                                        AIが提案を準備中...
                                     </p>
                                 </div>
                             </div>
