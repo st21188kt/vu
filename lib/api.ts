@@ -77,10 +77,10 @@ export const ranks: Rank[] = [
 ]
 
 export const categoryIcons: Record<GenreType, { icon: string; color: string; label: string }> = {
-  MOVE: { icon: '🏃', color: 'from-green-400 to-emerald-500', label: '動く' },
-  RELAX: { icon: '🧘', color: 'from-purple-400 to-violet-500', label: 'リラックス' },
-  CREATIVE: { icon: '🎨', color: 'from-cyan-400 to-teal-500', label: 'クリエイティブ' },
-  MUSIC: { icon: '🎵', color: 'from-pink-400 to-rose-500', label: '音楽' },
+  MOVE: { icon: '🏃', color: 'from-green-400 to-emerald-500', label: 'MOVE' },
+  RELAX: { icon: '🧘', color: 'from-purple-400 to-violet-500', label: 'RELAX' },
+  CREATIVE: { icon: '🎨', color: 'from-cyan-400 to-teal-500', label: 'CREATIVE' },
+  MUSIC: { icon: '🎵', color: 'from-pink-400 to-rose-500', label: 'MUSIC' },
 }
 
 export const avatarColorOptions = [
