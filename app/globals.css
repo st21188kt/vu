@@ -245,3 +245,23 @@
     animation: pulse-ring 2s ease-out infinite;
     z-index: -1;
 }
+
+/* 丸＋アイコン一緒にポンポン跳ねるアニメ */
+@keyframes bounce-together {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    25% {
+        transform: translateY(-15%);
+    }
+    50% {
+        transform: translateY(-8%);
+    }
+    75% {
+        transform: translateY(-12%);
+    }
+}
+
+.bounce-together {
+    animation: bounce-together 0.8s ease-in-out infinite;
+}

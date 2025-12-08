@@ -74,16 +74,17 @@ export function LikesPage() {
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="flex-1 flex flex-col items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6">
-                    <Heart className="w-10 h-10 text-muted-foreground/50 animate-pulse" />
-                </div>
-                <p className="text-muted-foreground">読み込み中...</p>
+if (isLoading) {
+    return (
+        <div className="flex-1 flex flex-col items-center justify-center">
+            <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6 bounce-together">
+                <Heart className="w-10 h-10 text-muted-foreground/50" />
             </div>
-        );
-    }
+            <p className="text-muted-foreground">読み込み中...</p>
+        </div>
+    );
+}
+
 
     return (
         <div className="flex-1 flex flex-col">
