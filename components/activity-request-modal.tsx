@@ -266,6 +266,7 @@ export function ActivityRequestModal({
 
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
                 <div
+                key={currentActivity?.text}
                     className="w-full max-w-md animate-in fade-in zoom-in-95 duration-300"
                     role="dialog"
                     aria-modal="true"

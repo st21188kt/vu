@@ -265,3 +265,22 @@
 .bounce-together {
     animation: bounce-together 0.8s ease-in-out infinite;
 }
+
+@keyframes pop-from-back {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.5);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-5px) scale(1.05);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.pop-from-back {
+  animation: pop-from-back 0.5s ease-out forwards;
+  transform-origin: center;
+}
