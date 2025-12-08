@@ -145,7 +145,10 @@ export async function fetchAllActivities(): Promise<Activity[]> {
 
     return activities
   } catch (error) {
-    console.error('Failed to fetch activities:', error)
+    console.error('Failed to fetch activities:', error instanceof Error ? error.message : JSON.stringify(error, null, 2))
+    if (error instanceof Error) {
+      console.error('Error stack:', error.stack)
+    }
     return []
   }
 }
@@ -373,7 +376,7 @@ export async function fetchUserProfile(userId: string): Promise<DbUser | null> {
     if (error) throw error
     return data || null
   } catch (error) {
-    console.error('Failed to fetch user profile:', error)
+    console.error('Failed to fetch user profile:', error instanceof Error ? error.message : JSON.stringify(error, null, 2))
     return null
   }
 }

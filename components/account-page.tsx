@@ -72,57 +72,26 @@ export function AccountPage() {
                 console.log("AccountPage: profile fetch result:", profile);
 
                 if (!profile) {
-                    // プロフィールが見つからない場合、自動作成を試みる
+                    // プロフィールが見つからない場合
+                    // user-context.tsx の ensureUserProfile が自動作成するはずなので、
+                    // 短時間待って再取得を試みる
                     console.log(
-                        "AccountPage: profile not found, attempting to create..."
+                        "AccountPage: profile not found, waiting for auto-creation..."
                     );
-
-                    // Supabase Auth の ユーザー情報を取得
-                    const {
-                        data: { user: authUser },
-                        error: authError,
-                    } = await supabase.auth.getUser();
-
-                    if (authError || !authUser) {
+                    
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    profile = await fetchUserProfile(userId);
+                    
+                    if (!profile) {
                         console.error(
-                            "AccountPage: failed to get auth user:",
-                            authError
-                        );
-                        setError("認証情報が見つかりません");
-                        setIsLoading(false);
-                        return;
-                    }
-
-                    // プロフィール作成
-                    const username = authUser.email?.split("@")[0] || "User";
-                    const { data: newProfile, error: createError } =
-                        await supabase
-                            .from("users")
-                            .insert({
-                                user_id: userId,
-                                username: username,
-                                avatar_url:
-                                    authUser.user_metadata?.avatar_url || null,
-                                activity_count: 0,
-                                most_frequent_genre: null,
-                            })
-                            .select()
-                            .single();
-
-                    if (createError) {
-                        console.error(
-                            "AccountPage: failed to create profile:",
-                            createError
+                            "AccountPage: profile still not found after retry"
                         );
                         setError(
-                            `プロフィール作成エラー: ${createError.message}`
+                            "ユーザープロフィールが見つかりません。ページをリロードしてください。"
                         );
                         setIsLoading(false);
                         return;
                     }
-
-                    console.log("AccountPage: profile created:", newProfile);
-                    profile = newProfile;
                 }
 
                 if (profile) {

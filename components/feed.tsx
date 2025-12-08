@@ -43,7 +43,7 @@ export function Feed() {
     const loadActivities = async () => {
         setIsLoading(true);
         console.log("Feed: loadActivities called, userId:", userId);
-        const data = await fetchAllActivities(userId || undefined);
+        const data = await fetchAllActivities();
         console.log("Feed: fetchAllActivities returned:", data);
         setActivities(data);
         // 現在のユーザーがいいねしているアクティビティを取得
