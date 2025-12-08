@@ -77,20 +77,27 @@ export const ranks: Rank[] = [
 ]
 
 export const categoryIcons: Record<GenreType, { icon: string; color: string; label: string }> = {
-  MOVE: { icon: '🏃', color: 'from-green-400 to-emerald-500', label: '動く' },
-  RELAX: { icon: '🧘', color: 'from-purple-400 to-violet-500', label: 'リラックス' },
-  CREATIVE: { icon: '🎨', color: 'from-cyan-400 to-teal-500', label: 'クリエイティブ' },
-  MUSIC: { icon: '🎵', color: 'from-pink-400 to-rose-500', label: '音楽' },
+  MOVE: { icon: '🏃', color: 'from-green-400 to-emerald-500', label: 'MOVE' },
+  RELAX: { icon: '🧘', color: 'from-purple-400 to-violet-500', label: 'RELAX' },
+  CREATIVE: { icon: '🎨', color: 'from-cyan-400 to-teal-500', label: 'CREATIVE' },
+  MUSIC: { icon: '🎵', color: 'from-pink-400 to-rose-500', label: 'MUSIC' },
 }
 
 export const avatarColorOptions = [
   { id: 0, label: 'グレイ', icon: '⚫', outer: 'from-gray-400 to-gray-500', inner: 'from-gray-500 to-gray-600' },
-  { id: 1, label: 'グリーン', icon: '💚', outer: 'from-green-400 to-emerald-500', inner: 'from-green-500 to-emerald-600' },
-  { id: 2, label: 'ブルー', icon: '💙', outer: 'from-blue-400 to-cyan-500', inner: 'from-blue-500 to-cyan-600' },
-  { id: 3, label: 'パープル', icon: '💜', outer: 'from-purple-400 to-pink-500', inner: 'from-purple-500 to-pink-600' },
-  { id: 4, label: 'オレンジ', icon: '🧡', outer: 'from-orange-400 to-red-500', inner: 'from-orange-500 to-red-600' },
-  { id: 5, label: 'ピンク', icon: '🌸', outer: 'from-pink-400 to-rose-500', inner: 'from-pink-500 to-rose-600' },
-]
+  { id: 1, label: 'ホワイト', icon: '🤍', outer: 'from-gray-300 to-white', inner: 'from-gray-300 to-white' },
+  { id: 2, label: 'イエロー', icon: '💛', outer: 'from-yellow-300 to-amber-400', inner: 'from-yellow-400 to-amber-500' },
+  { id: 3, label: 'グリーン', icon: '💚', outer: 'from-green-400 to-emerald-500', inner: 'from-green-500 to-emerald-600' },
+  { id: 4, label: 'ブルー', icon: '💙', outer: 'from-blue-400 to-cyan-500', inner: 'from-blue-500 to-cyan-600' },
+  { id: 5, label: 'パープル', icon: '💜', outer: 'from-purple-400 to-pink-500', inner: 'from-purple-500 to-pink-600' },
+  { id: 6, label: 'オレンジ', icon: '🧡', outer: 'from-orange-400 to-red-500', inner: 'from-orange-500 to-red-600' },
+  { id: 7, label: 'ピンク', icon: '🌸', outer: 'from-pink-400 to-rose-500', inner: 'from-pink-500 to-rose-600' },
+  { id: 8, label: 'ギャラクシー', icon: '✨', outer: 'from-indigo-700 to-black', inner: 'from-purple-700 to-black' },
+  { id: 9, label: 'ドラゴンブレス', icon: '🐉', outer: 'from-red-700 to-black', inner: 'from-orange-700 to-black' },
+  { id: 10, label: 'レインボー', icon: '🌈', outer: 'from-red-400 via-yellow-400 to-blue-400', inner: 'from-purple-400 via-pink-400 to-emerald-400' },
+];
+
+
 
 /**
  * Supabase からすべてのアクティビティを取得（ユーザー情報といいね数を含む）
@@ -259,10 +266,42 @@ export async function createActivity(
       throw error
     }
 
-    // activity_count を更新
+    // activity_count と most_frequent_genre を更新
+    const newActivityCount = (userData.activity_count || 0) + 1
+    
+    // most_frequent_genre を計算（新しいアクティビティを含めて）
+    const { data: allUserActivities } = await supabase
+      .from('activities')
+      .select('genre')
+      .eq('user_id', userData.id)
+
+    let mostFrequentGenre: GenreType | null = null
+    if (allUserActivities && allUserActivities.length > 0) {
+      const genreCount: Record<GenreType, number> = {
+        RELAX: 0,
+        MOVE: 0,
+        CREATIVE: 0,
+        MUSIC: 0,
+      }
+      allUserActivities.forEach((activity: any) => {
+        genreCount[activity.genre as GenreType]++
+      })
+      
+      let maxCount = 0
+      Object.entries(genreCount).forEach(([genre, count]) => {
+        if (count > maxCount) {
+          maxCount = count
+          mostFrequentGenre = genre as GenreType
+        }
+      })
+    }
+
     const { error: updateError } = await supabase
       .from('users')
-      .update({ activity_count: (userData.activity_count || 0) + 1 })
+      .update({ 
+        activity_count: newActivityCount,
+        most_frequent_genre: mostFrequentGenre,
+      })
       .eq('id', userData.id)
 
     if (updateError) {

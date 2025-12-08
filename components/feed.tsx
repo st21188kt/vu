@@ -43,7 +43,7 @@ export function Feed() {
     const loadActivities = async () => {
         setIsLoading(true);
         console.log("Feed: loadActivities called, userId:", userId);
-        const data = await fetchAllActivities(userId || undefined);
+        const data = await fetchAllActivities();
         console.log("Feed: fetchAllActivities returned:", data);
         setActivities(data);
         // 現在のユーザーがいいねしているアクティビティを取得
@@ -133,14 +133,15 @@ export function Feed() {
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto">
-                {isLoading ? (
-                    <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
-                        <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6">
-                            <Sparkles className="w-10 h-10 text-muted-foreground/50 animate-spin" />
-                        </div>
-                        <p className="text-lg font-medium">読み込み中...</p>
-                    </div>
+<div className="flex-1 overflow-y-auto">
+     {isLoading ? (
+         <div className="flex flex-col items-center justify-center py-24 text-muted-foreground"> 
+         <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6"> 
+            <Sparkles className="w-10 h-10 text-muted-foreground/50 animate-spin" /> 
+            </div> 
+            <p className="text-lg font-medium"></p> 
+            </div>
+
                 ) : filteredActivities.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
                         <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6">
