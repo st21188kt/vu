@@ -511,7 +511,7 @@ if (isLoading) {
             {/* メインカード: 一番出やすいジャンル */}
             <div className="card-gradient rounded-2xl p-6">
                 <h3 className="text-sm font-medium text-muted-foreground mb-4">
-                    よく実行するジャンル
+                    Favorite Genre
                 </h3>
                 {mostFrequentGenre ? (
                     <div className="flex items-center gap-4">
@@ -563,7 +563,7 @@ if (isLoading) {
                     <div className="flex items-center gap-2 text-muted-foreground mb-2">
                         <Flame className="w-5 h-5 text-orange-500" />
                         <span className="text-sm font-medium">
-                            累計実行回数
+                            Total Runs
                         </span>
                     </div>
                     <p
@@ -581,7 +581,7 @@ if (isLoading) {
                     <div className="flex items-center gap-2 text-muted-foreground mb-2">
                         <Trophy className="w-5 h-5 text-yellow-500" />
                         <span className="text-sm font-medium">
-                            次のランクまで
+                            To Next Rank
                         </span>
                     </div>
                     {nextRank ? (
