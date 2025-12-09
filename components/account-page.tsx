@@ -499,16 +499,14 @@ if (isLoading) {
                         <div
                             className={cn(
                                 "w-20 h-20 rounded-2xl bg-linear-to-br flex items-center justify-center text-4xl shadow-lg",
-                                categoryIcons[mostFrequentGenre]?.color ||
-                                    "from-gray-400 to-gray-500"
+                                categoryIcons[mostFrequentGenre as GenreType].color
                             )}
                         >
-                            {categoryIcons[mostFrequentGenre]?.icon || "✨"}
+                            {categoryIcons[mostFrequentGenre as GenreType].icon}
                         </div>
                         <div>
                             <p className="text-2xl font-bold">
-                                {categoryIcons[mostFrequentGenre]?.label ||
-                                    mostFrequentGenre}
+                                {categoryIcons[mostFrequentGenre as GenreType].label}
                             </p>
                             <p className="text-muted-foreground text-sm">
                                 {
