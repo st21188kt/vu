@@ -92,6 +92,8 @@ export function Feed() {
     useEffect(() => {
         loadActivities(true);
 
+        
+
         // アクティビティ作成イベントをリスン
         const handleActivityCreated = () => {
             console.log("Activity created, reloading feed...");
@@ -106,6 +108,8 @@ export function Feed() {
                 handleActivityCreated
             );
     }, [userId, userUUID]);
+
+    
 
     const filteredActivities =
         activeTab === "all"
@@ -229,3 +233,4 @@ export function Feed() {
         </div>
     );
 }
+
