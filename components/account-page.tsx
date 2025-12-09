@@ -72,57 +72,26 @@ export function AccountPage() {
                 console.log("AccountPage: profile fetch result:", profile);
 
                 if (!profile) {
-                    // プロフィールが見つからない場合、自動作成を試みる
+                    // プロフィールが見つからない場合
+                    // user-context.tsx の ensureUserProfile が自動作成するはずなので、
+                    // 短時間待って再取得を試みる
                     console.log(
-                        "AccountPage: profile not found, attempting to create..."
+                        "AccountPage: profile not found, waiting for auto-creation..."
                     );
-
-                    // Supabase Auth の ユーザー情報を取得
-                    const {
-                        data: { user: authUser },
-                        error: authError,
-                    } = await supabase.auth.getUser();
-
-                    if (authError || !authUser) {
+                    
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    profile = await fetchUserProfile(userId);
+                    
+                    if (!profile) {
                         console.error(
-                            "AccountPage: failed to get auth user:",
-                            authError
-                        );
-                        setError("認証情報が見つかりません");
-                        setIsLoading(false);
-                        return;
-                    }
-
-                    // プロフィール作成
-                    const username = authUser.email?.split("@")[0] || "User";
-                    const { data: newProfile, error: createError } =
-                        await supabase
-                            .from("users")
-                            .insert({
-                                user_id: userId,
-                                username: username,
-                                avatar_url:
-                                    authUser.user_metadata?.avatar_url || null,
-                                activity_count: 0,
-                                most_frequent_genre: null,
-                            })
-                            .select()
-                            .single();
-
-                    if (createError) {
-                        console.error(
-                            "AccountPage: failed to create profile:",
-                            createError
+                            "AccountPage: profile still not found after retry"
                         );
                         setError(
-                            `プロフィール作成エラー: ${createError.message}`
+                            "ユーザープロフィールが見つかりません。ページをリロードしてください。"
                         );
                         setIsLoading(false);
                         return;
                     }
-
-                    console.log("AccountPage: profile created:", newProfile);
-                    profile = newProfile;
                 }
 
                 if (profile) {
@@ -292,15 +261,27 @@ if (isLoading) {
     const currentRank = getCurrentRank(activityCount);
     const { nextRank, remaining } = getNextRankInfo(activityCount);
 
-    // localStorage から genreScores を取得し、最もスコアが高いジャンルを決定論的に選定
-    const genreScores = loadGenreScores("genreScores");
+    // myActivities から最も作成したジャンルを計算
     let mostFrequentGenre: GenreType | null = null;
-    if (genreScores && genreScores.length > 0) {
-      // 最も高いスコアを持つジャンルを確定的に選ぶ
-      const maxGenre = genreScores.reduce((prev, current) =>
-        current.value > prev.value ? current : prev
-      );
-      mostFrequentGenre = maxGenre.key;
+    if (myActivities.length > 0) {
+        const genreCount: Record<GenreType, number> = {
+            RELAX: 0,
+            MOVE: 0,
+            CREATIVE: 0,
+            MUSIC: 0,
+        };
+        
+        myActivities.forEach((activity) => {
+            genreCount[activity.category]++;
+        });
+        
+        let maxCount = 0;
+        Object.entries(genreCount).forEach(([genre, count]) => {
+            if (count > maxCount) {
+                maxCount = count;
+                mostFrequentGenre = genre as GenreType;
+            }
+        });
     }
 
     return (
