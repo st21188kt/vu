@@ -161,6 +161,82 @@ export async function fetchAllActivities(): Promise<Activity[]> {
 }
 
 /**
+ * Supabase からアクティビティをページネーション付きで取得
+ */
+export async function fetchActivitiesWithPagination(
+  page: number,
+  limit: number
+): Promise<{ activities: Activity[]; hasMore: boolean }> {
+  try {
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    const { data, error, count } = await supabase
+      .from('activities')
+      .select(
+        `
+        id,
+        user_id,
+        genre,
+        text,
+        created_at,
+        users:user_id (
+          username,
+          avatar_url,
+          outer_color_id,
+          inner_color_id
+        )
+      `,
+        { count: 'exact' }
+      )
+      .order('created_at', { ascending: false })
+      .range(from, to)
+
+    if (error) throw error
+
+    const activities: Activity[] = (data || []).map((item: any) => ({
+      id: item.id,
+      text: item.text,
+      category: item.genre as GenreType,
+      userId: item.user_id,
+      userName: item.users?.username || 'Unknown',
+      userAvatar: item.users?.avatar_url || '/default-user-avatar.png',
+      userOuterColorId: item.users?.outer_color_id,
+      userInnerColorId: item.users?.inner_color_id,
+      createdAt: new Date(item.created_at),
+      likes: 0,
+      likedBy: [],
+    }))
+
+    // いいね情報を取得してカウント
+    for (const activity of activities) {
+      const { data: likesData } = await supabase
+        .from('likes')
+        .select('user_id')
+        .eq('activity_id', activity.id)
+
+      if (likesData) {
+        activity.likes = likesData.length
+        activity.likedBy = likesData.map((l) => l.user_id)
+      }
+    }
+
+    const hasMore = (count || 0) > to + 1
+
+    return { activities, hasMore }
+  } catch (error) {
+    console.error(
+      'Failed to fetch activities with pagination:',
+      error instanceof Error ? error.message : JSON.stringify(error, null, 2)
+    )
+    if (error instanceof Error) {
+      console.error('Error stack:', error.stack)
+    }
+    return { activities: [], hasMore: false }
+  }
+}
+
+/**
  * ユーザーの投稿を取得（ユーザー情報といいね数を含む）
  */
 export async function fetchUserActivities(userId: string): Promise<Activity[]> {
@@ -170,10 +246,15 @@ export async function fetchUserActivities(userId: string): Promise<Activity[]> {
       .from('users')
       .select('id')
       .eq('user_id', userId)
-      .single()
+      .maybeSingle()
 
-    if (userError || !userData) {
-      console.error('User not found:', userError)
+    if (userError) {
+      console.error('Error fetching user:', userError)
+      return []
+    }
+
+    if (!userData) {
+      // ユーザーが見つからない場合は空のリストを返す（エラーログは出さない）
       return []
     }
 
@@ -410,7 +491,7 @@ export async function fetchUserProfile(userId: string): Promise<DbUser | null> {
       .from('users')
       .select('*')
       .eq('user_id', userId)
-      .single()
+      .maybeSingle()
 
     if (error) throw error
     return data || null
