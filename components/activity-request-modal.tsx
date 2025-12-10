@@ -345,7 +345,7 @@ export function ActivityRequestModal({
                                     className="flex-1 flex items-center justify-center gap-2 py-3.5 px-4 rounded-xl gradient-instagram text-white font-semibold shadow-lg shadow-pink-500/30 hover:shadow-pink-500/50 hover:scale-[1.02] transition-all duration-200 disabled:opacity-50"
                                 >
                                     <Check className="w-5 h-5" />
-                                    {isLoading ? "送信中..." : "実行した"}
+                                    {isLoading ? "送信中..." : "実行する"}
                                 </button>
                             </div>
 
@@ -359,7 +359,7 @@ export function ActivityRequestModal({
 
                             <div className="px-6 pb-6">
                                 <p className="text-xs text-center text-muted-foreground">
-                                    「実行した」を押すとあなたのフィードに投稿されます
+                                    「実行する」を押すとアクティビティが投稿されます
                                 </p>
                             </div>
                         </div>
