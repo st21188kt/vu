@@ -1,0 +1,24 @@
+npm warn Unknown global config "3128" (http://po.cc.ibaraki-ct.ac.jp:3128). This will stop working in the next major version of npm.
+
+> vu@0.1.0 build
+> next build
+
+   ▲ Next.js 16.0.7 (Turbopack)
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 11.2s
+   Running TypeScript ...
+Failed to compile.
+
+./components/account-page.tsx:17:5
+Type error: Module '"@/lib/api"' has no exported member 'uploadAvatar'.
+
+[0m [90m 15 |[39m     updateUserProfile[33m,[39m
+ [90m 16 |[39m     fetchLikedActivitiesWithPagination[33m,[39m
+[31m[1m>[22m[39m[90m 17 |[39m     uploadAvatar[33m,[39m
+ [90m    |[39m     [31m[1m^[22m[39m
+ [90m 18 |[39m     updateUserColors[33m,[39m
+ [90m 19 |[39m     fetchUploadedImages
+ [90m 20 |[39m } [36mfrom[39m [32m"@/lib/api"[39m[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

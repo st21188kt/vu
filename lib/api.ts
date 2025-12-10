@@ -163,15 +163,19 @@ export async function fetchAllActivities(): Promise<Activity[]> {
 /**
  * Supabase からアクティビティをページネーション付きで取得
  */
+/**
+ * Supabase からアクティビティをページネーション付きで取得
+ */
 export async function fetchActivitiesWithPagination(
   page: number,
-  limit: number
+  limit: number,
+  userId?: string
 ): Promise<{ activities: Activity[]; hasMore: boolean }> {
   try {
     const from = (page - 1) * limit
     const to = from + limit - 1
 
-    const { data, error, count } = await supabase
+    let query = supabase
       .from('activities')
       .select(
         `
@@ -191,6 +195,12 @@ export async function fetchActivitiesWithPagination(
       )
       .order('created_at', { ascending: false })
       .range(from, to)
+
+    if (userId) {
+      query = query.eq('user_id', userId)
+    }
+
+    const { data, error, count } = await query
 
     if (error) throw error
 
@@ -233,6 +243,170 @@ export async function fetchActivitiesWithPagination(
       console.error('Error stack:', error.stack)
     }
     return { activities: [], hasMore: false }
+  }
+}
+
+/**
+ * ユーザーがいいねしたアクティビティを取得（ページネーション付き）
+ */
+export async function fetchLikedActivitiesWithPagination(
+  userId: string,
+  page: number,
+  limit: number
+): Promise<{ activities: Activity[]; hasMore: boolean }> {
+  try {
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    // 0. user_id string -> users.id UUID lookup
+    const { data: uData } = await supabase.from('users').select('id').eq('user_id', userId).single();
+    if (!uData) return { activities: [], hasMore: false };
+    const userUuid = uData.id;
+
+    // 1. likes テーブルから対象ユーザーのいいねを取得
+    const { data: likesData, error: likesError, count } = await supabase
+      .from('likes')
+      .select('activity_id', { count: 'exact' })
+      .eq('user_id', userUuid) // Use UUID
+      .order('created_at', { ascending: false })
+      .range(from, to)
+
+    if (likesError) throw likesError
+    if (!likesData || likesData.length === 0) return { activities: [], hasMore: false }
+
+    const activityIds = likesData.map(l => l.activity_id)
+
+    // 2. activity_id リストを使ってアクティビティを取得
+    // 注意: in句を使うと順序が保証されないが、いいねした順に表示したい場合は工夫が必要
+    // 簡易的に created_at 順で表示するか、クライアントサイドでソートするか検討
+    // ここではアクティビティ自体の新しい順で表示することにする
+    const { data, error } = await supabase
+      .from('activities')
+      .select(
+        `
+                id,
+                user_id,
+                genre,
+                text,
+                created_at,
+                users:user_id (
+                  username,
+                  avatar_url,
+                  outer_color_id,
+                  inner_color_id
+                )
+              `
+      )
+      .in('id', activityIds)
+      .order('created_at', { ascending: false })
+
+    if (error) throw error
+
+    const activities: Activity[] = (data || []).map((item: any) => ({
+      id: item.id,
+      text: item.text,
+      category: item.genre as GenreType,
+      userId: item.user_id,
+      userName: item.users?.username || 'Unknown',
+      userAvatar: item.users?.avatar_url || '/default-user-avatar.png',
+      userOuterColorId: item.users?.outer_color_id,
+      userInnerColorId: item.users?.inner_color_id,
+      createdAt: new Date(item.created_at),
+      likes: 0,
+      likedBy: [],
+    }))
+
+    // いいね情報を付加
+    for (const activity of activities) {
+      const { data: likesData } = await supabase
+        .from('likes')
+        .select('user_id')
+        .eq('activity_id', activity.id)
+
+      if (likesData) {
+        activity.likes = likesData.length
+        activity.likedBy = likesData.map((l) => l.user_id)
+      }
+    }
+
+    const hasMore = (count || 0) > to + 1
+    return { activities, hasMore }
+
+  } catch (error) {
+    console.error('Failed to fetch liked activities:', error)
+    return { activities: [], hasMore: false }
+  }
+}
+
+/**
+ * 自分の投稿でいいねされたものを取得（ページネーション付き）
+ */
+export async function fetchMyLikedActivitiesWithPagination(
+  userId: string,
+  page: number,
+  limit: number
+): Promise<{ activities: Activity[]; hasMore: boolean }> {
+  console.log(`[DEBUG] fetchMyLikedActivities: userId=${userId}, page=${page}, limit=${limit}`);
+  try {
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+
+    // 0. user_id string -> users.id UUID lookup
+    const { data: uData } = await supabase.from('users').select('id').eq('user_id', userId).single();
+    if (!uData) return { activities: [], hasMore: false };
+    const userUuid = uData.id;
+
+    // likes!inner により、いいねがついているアクティビティのみを取得（Inner Join）
+    // これにより、DBレベルでフィルタリングされ、正確なページネーションが可能になる
+    const { data, error, count } = await supabase
+      .from('activities')
+      .select(`
+        id,
+        user_id,
+        genre,
+        text,
+        created_at,
+        users:user_id (
+          username,
+          avatar_url,
+          outer_color_id,
+          inner_color_id
+        ),
+        likes!inner(user_id)
+      `, { count: 'exact' })
+      .eq('user_id', userUuid) // Use UUID
+      .order('created_at', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      console.error('[DEBUG] fetchMyLikedActivities: Fetch error:', error);
+      throw error;
+    }
+
+    // Activity型に変換
+    const activities: Activity[] = (data || []).map((item: any) => ({
+      id: item.id,
+      text: item.text,
+      category: item.genre as GenreType,
+      userId: item.user_id,
+      userName: item.users?.username || 'Unknown',
+      userAvatar: item.users?.avatar_url || '/default-user-avatar.png',
+      userOuterColorId: item.users?.outer_color_id,
+      userInnerColorId: item.users?.inner_color_id,
+      createdAt: new Date(item.created_at),
+      likes: item.likes.length,
+      likedBy: item.likes.map((l: any) => l.user_id),
+    }));
+
+    const hasMore = (count || 0) > to + 1;
+
+    console.log(`[DEBUG] fetchMyLikedActivities: Fetched ${activities.length} activities. Total match: ${count}`);
+    
+    return { activities, hasMore };
+
+  } catch (error) {
+    console.error('Failed to fetch my liked activities:', error);
+    return { activities: [], hasMore: false };
   }
 }
 
@@ -352,7 +526,7 @@ export async function createActivity(
 
     // activity_count と most_frequent_genre を更新
     const newActivityCount = (userData.activity_count || 0) + 1
-    
+
     // most_frequent_genre を計算（新しいアクティビティを含めて）
     const { data: allUserActivities } = await supabase
       .from('activities')
@@ -370,7 +544,7 @@ export async function createActivity(
       allUserActivities.forEach((activity: any) => {
         genreCount[activity.genre as GenreType]++
       })
-      
+
       let maxCount = 0
       Object.entries(genreCount).forEach(([genre, count]) => {
         if (count > maxCount) {
@@ -382,7 +556,7 @@ export async function createActivity(
 
     const { error: updateError } = await supabase
       .from('users')
-      .update({ 
+      .update({
         activity_count: newActivityCount,
         most_frequent_genre: mostFrequentGenre,
       })
@@ -622,4 +796,74 @@ export function getNextRankInfo(activityCount: number): { nextRank: Rank | null;
 
   const nextRank = ranks[currentIndex + 1]
   return { nextRank, remaining: nextRank.minCount - activityCount }
+}
+
+/**
+ * ユーザーのカラー設定を更新
+ */
+export async function updateUserColors(userId: string, outerColorId: number, innerColorId: number) {
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({
+        outer_color_id: outerColorId,
+        inner_color_id: innerColorId,
+      })
+      .eq('user_id', userId)
+
+    if (error) throw error
+    return true
+  } catch (error) {
+    console.error('Failed to update user colors:', error)
+    return false
+  }
+}
+
+/**
+ * アバター画像をアップロード
+ */
+export async function uploadAvatar(userId: string, file: File): Promise<string | null> {
+  try {
+    const fileExt = file.name.split('.').pop()
+    const fileName = `${userId}/${Date.now()}.${fileExt}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('avatars')
+      .upload(fileName, file)
+
+    if (uploadError) throw uploadError
+
+    const { data } = supabase.storage.from('avatars').getPublicUrl(fileName)
+    
+    // プロフィールも更新
+    await updateUserProfile(userId, { avatar_url: data.publicUrl })
+    
+    return data.publicUrl
+  } catch (error) {
+    console.error('Failed to upload avatar:', error)
+    return null
+  }
+}
+
+/**
+ * アップロード済み画像を取得
+ */
+export async function fetchUploadedImages(userId: string): Promise<string[]> {
+  try {
+    const { data, error } = await supabase.storage
+      .from('avatars')
+      .list(userId)
+
+    if (error) throw error
+
+    return (data || []).map(file => {
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(`${userId}/${file.name}`)
+      return urlData.publicUrl
+    })
+  } catch (error) {
+    console.error('Failed to fetch uploaded images:', error)
+    return []
+  }
 }

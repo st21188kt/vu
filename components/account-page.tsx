@@ -13,11 +13,18 @@ import {
     fetchUserActivities,
     fetchUserProfile,
     updateUserProfile,
+    fetchLikedActivitiesWithPagination,
+    uploadAvatar,
+    updateUserColors,
+    fetchUploadedImages
 } from "@/lib/api";
 import { useUser } from "@/contexts/user-context";
 import { loadGenreScores } from "@/utils/storage";
 import type { Activity, DbUser } from "@/lib/api";
 import type { GenreType } from "@/types/genre";
+import { InfiniteScrollSentinel } from "@/components/ui/infinite-scroll-sentinel";
+
+const PAGE_SIZE = 5; // アカウントページは場所を取るので少なめに
 
 export function AccountPage() {
     const { userId, isLoading: userContextLoading } = useUser();
@@ -35,6 +42,15 @@ export function AccountPage() {
         null
     );
     const [error, setError] = useState<string | null>(null);
+
+    // Pagination state for liked activities
+    const [likedPage, setLikedPage] = useState(1);
+    const [hasMoreLiked, setHasMoreLiked] = useState(false);
+    const [isLoadingMoreLiked, setIsLoadingMoreLiked] = useState(false);
+
+
+
+
 
     // ユーザープロフィールとアクティビティを取得
     useEffect(() => {
@@ -78,10 +94,10 @@ export function AccountPage() {
                     console.log(
                         "AccountPage: profile not found, waiting for auto-creation..."
                     );
-                    
+
                     await new Promise(resolve => setTimeout(resolve, 1000));
                     profile = await fetchUserProfile(userId);
-                    
+
                     if (!profile) {
                         console.error(
                             "AccountPage: profile still not found after retry"
@@ -113,14 +129,14 @@ export function AccountPage() {
                 );
                 setMyActivities(userActivities);
 
-                // ユーザーがいいねしたアクティビティを取得
+                // ユーザーがいいねしたアクティビティを取得 (初期ロード)
                 if (profile) {
-                    const allActivities = await fetchAllActivities();
-                    const liked = allActivities.filter((a) =>
-                        a.likedBy.includes(profile.id)
-                    );
+                    console.log("AccountPage: fetching liked activities");
+                    const { activities: liked, hasMore } = await fetchLikedActivitiesWithPagination(profile.user_id, 1, PAGE_SIZE);
                     console.log("AccountPage: liked activities:", liked);
                     setLikedActivities(liked);
+                    setHasMoreLiked(hasMore);
+                    setLikedPage(1);
                 }
             } catch (error) {
                 const errorMsg =
@@ -211,6 +227,28 @@ export function AccountPage() {
         setShowColorSettings(false);
     };
 
+    const loadMoreLikedActivities = async () => {
+        if (!userProfile) return;
+        setIsLoadingMoreLiked(true);
+        const nextPage = likedPage + 1;
+
+        try {
+            const { activities: moreLiked, hasMore } = await fetchLikedActivitiesWithPagination(
+                userProfile.user_id,
+                nextPage,
+                PAGE_SIZE
+            );
+
+            setLikedActivities(prev => [...prev, ...moreLiked]);
+            setHasMoreLiked(hasMore);
+            setLikedPage(nextPage);
+        } catch (err) {
+            console.error("Failed to load more liked activities:", err);
+        } finally {
+            setIsLoadingMoreLiked(false);
+        }
+    };
+
     const formatDate = (date: Date) => {
         const now = new Date();
         const diff = now.getTime() - date.getTime();
@@ -223,18 +261,18 @@ export function AccountPage() {
         return `${days}日前`;
     };
 
-if (isLoading) {
-    return (
-        <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6 bounce-together">
-                <User className="w-10 h-10 text-muted-foreground/50" />
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6 bounce-together">
+                    <User className="w-10 h-10 text-muted-foreground/50" />
+                </div>
+                <p className="text-muted-foreground">読み込み中...</p>
             </div>
-            <p className="text-muted-foreground">読み込み中...</p>
-        </div>
-    );
-}
+        );
+    }
 
-    
+
 
     if (error) {
         return (
@@ -270,11 +308,11 @@ if (isLoading) {
             CREATIVE: 0,
             MUSIC: 0,
         };
-        
+
         myActivities.forEach((activity) => {
             genreCount[activity.category]++;
         });
-        
+
         let maxCount = 0;
         Object.entries(genreCount).forEach(([genre, count]) => {
             if (count > maxCount) {
@@ -292,22 +330,20 @@ if (isLoading) {
                     {/* アバター */}
                     <div className="relative">
                         <div
-                            className={`p-0.5 rounded-full bg-linear-to-tr ${
-                                selectedOuterColor !== null
-                                    ? avatarColorOptions[selectedOuterColor]
-                                          .outer
-                                    : "from-blue-400 to-cyan-500"
-                            }`}
+                            className={`p-0.5 rounded-full bg-linear-to-tr ${selectedOuterColor !== null
+                                ? avatarColorOptions[selectedOuterColor]
+                                    .outer
+                                : "from-blue-400 to-cyan-500"
+                                }`}
                         >
                             <div className="p-0.5 bg-card rounded-full">
                                 <div
-                                    className={`w-20 h-20 rounded-full bg-linear-to-br ${
-                                        selectedInnerColor !== null
-                                            ? avatarColorOptions[
-                                                  selectedInnerColor
-                                              ].inner
-                                            : "from-purple-400 to-pink-500"
-                                    } flex items-center justify-center`}
+                                    className={`w-20 h-20 rounded-full bg-linear-to-br ${selectedInnerColor !== null
+                                        ? avatarColorOptions[
+                                            selectedInnerColor
+                                        ].inner
+                                        : "from-purple-400 to-pink-500"
+                                        } flex items-center justify-center`}
                                 >
                                     <User
                                         className="w-10 h-10 text-white"
@@ -404,9 +440,9 @@ if (isLoading) {
                                             : "border-transparent opacity-70 hover:opacity-100"
                                     )}
                                 >
-                                     <span className="text-sm font-medium text-white drop-shadow-[0_0_2px_black]">
-                                      {option.label}
-                                     </span>
+                                    <span className="text-sm font-medium text-white drop-shadow-[0_0_2px_black]">
+                                        {option.label}
+                                    </span>
 
                                 </button>
                             ))}
@@ -432,7 +468,7 @@ if (isLoading) {
                                     )}
                                 >
                                     <span className="text-sm font-medium text-white drop-shadow-[0_0_2px_black]">
-                                     {option.label}
+                                        {option.label}
                                     </span>
 
                                 </button>
@@ -443,22 +479,20 @@ if (isLoading) {
                     {/* プレビュー */}
                     <div className="flex justify-center py-2">
                         <div
-                            className={`p-0.5 rounded-full bg-linear-to-tr ${
-                                selectedOuterColor !== null
-                                    ? avatarColorOptions[selectedOuterColor]
-                                          .outer
-                                    : "from-blue-400 to-cyan-500"
-                            }`}
+                            className={`p-0.5 rounded-full bg-linear-to-tr ${selectedOuterColor !== null
+                                ? avatarColorOptions[selectedOuterColor]
+                                    .outer
+                                : "from-blue-400 to-cyan-500"
+                                }`}
                         >
                             <div className="p-0.5 bg-card rounded-full">
                                 <div
-                                    className={`w-16 h-16 rounded-full bg-linear-to-br ${
-                                        selectedInnerColor !== null
-                                            ? avatarColorOptions[
-                                                  selectedInnerColor
-                                              ].inner
-                                            : "from-purple-400 to-pink-500"
-                                    } flex items-center justify-center`}
+                                    className={`w-16 h-16 rounded-full bg-linear-to-br ${selectedInnerColor !== null
+                                        ? avatarColorOptions[
+                                            selectedInnerColor
+                                        ].inner
+                                        : "from-purple-400 to-pink-500"
+                                        } flex items-center justify-center`}
                                 >
                                     <User
                                         className="w-8 h-8 text-white"
@@ -605,12 +639,11 @@ if (isLoading) {
                                 currentRank.color
                             )}
                             style={{
-                                width: `${
-                                    ((activityCount - currentRank.minCount) /
-                                        (nextRank.minCount -
-                                            currentRank.minCount)) *
+                                width: `${((activityCount - currentRank.minCount) /
+                                    (nextRank.minCount -
+                                        currentRank.minCount)) *
                                     100
-                                }%`,
+                                    }%`,
                             }}
                         />
                     </div>
@@ -627,12 +660,14 @@ if (isLoading) {
                         いいねしたアクティビティ
                     </h3>
                 </div>
+
                 {likedActivities.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
                         まだいいねをしていません
                     </p>
                 ) : (
                     <div className="space-y-3">
+
                         {likedActivities.map((activity) => (
                             <div
                                 key={activity.id}
@@ -673,6 +708,12 @@ if (isLoading) {
                                 </div>
                             </div>
                         ))}
+
+                        <InfiniteScrollSentinel
+                            onInteract={loadMoreLikedActivities}
+                            hasMore={hasMoreLiked}
+                            isLoading={isLoadingMoreLiked}
+                        />
                     </div>
                 )}
             </div>

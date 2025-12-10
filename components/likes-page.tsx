@@ -3,46 +3,74 @@
 import { useState, useEffect } from "react";
 import { ActivityCard } from "./activity-card";
 import { Heart } from "lucide-react";
-import { fetchUserActivities, addLike, removeLike } from "@/lib/api";
+import { fetchUserActivities, addLike, removeLike, fetchMyLikedActivitiesWithPagination } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { useUser } from "@/contexts/user-context";
+import { InfiniteScrollSentinel } from "@/components/ui/infinite-scroll-sentinel";
 import type { Activity } from "@/lib/api";
 
 export function LikesPage() {
     const { userId } = useUser();
     const [likedActivities, setLikedActivities] = useState<Activity[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(false);
+    const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const PAGE_SIZE = 10;
+    
 
-    const loadData = async () => {
+
+
+
+    const loadData = async (isInitial = false) => {
         if (!userId) {
             setIsLoading(false);
             return;
         }
 
-        setIsLoading(true);
+        if (isInitial) {
+            setIsLoading(true);
+            setPage(1);
+        } else {
+            setIsLoadingMore(true);
+        }
+
+        const currentPage = isInitial ? 1 : page;
+
         try {
-            // ユーザーの投稿を取得
-            const userActivities = await fetchUserActivities(userId);
-            // いいねされた投稿だけをフィルタ
-            const activities = userActivities.filter(
-                (a) => a.likedBy.length > 0
-            );
-            setLikedActivities(activities);
+            // ユーザーの投稿でいいねされたものを取得
+            const { activities: newActivities, hasMore: more } = 
+                await fetchMyLikedActivitiesWithPagination(userId, currentPage, PAGE_SIZE);
+            
+            if (isInitial) {
+                setLikedActivities(newActivities);
+            } else {
+                setLikedActivities((prev) => [...prev, ...newActivities]);
+            }
+            
+            setHasMore(more);
+            if (!isInitial) {
+                setPage((prev) => prev + 1);
+            } else {
+                setPage(2);
+            }
         } catch (error) {
             console.error("Failed to load liked activities:", error);
         } finally {
-            setIsLoading(false);
+            if (isInitial) setIsLoading(false);
+            else setIsLoadingMore(false);
         }
     };
 
     useEffect(() => {
-        loadData();
+        loadData(true);
 
         // アクティビティ作成またはいいね変更イベントをリスン
         const handleActivityCreated = () => {
             console.log(
                 "Activity created or liked in likes page, reloading..."
             );
-            loadData();
+            loadData(true);
         };
 
         window.addEventListener("activityCreated", handleActivityCreated);
@@ -74,16 +102,16 @@ export function LikesPage() {
         }
     };
 
-if (isLoading) {
-    return (
-        <div className="flex-1 flex flex-col items-center justify-center">
-            <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6 bounce-together">
-                <Heart className="w-10 h-10 text-muted-foreground/50" />
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex flex-col items-center justify-center">
+                <div className="w-20 h-20 rounded-full bg-secondary flex items-center justify-center mb-6 bounce-together">
+                    <Heart className="w-10 h-10 text-muted-foreground/50" />
+                </div>
+                <p className="text-muted-foreground">読み込み中...</p>
             </div>
-            <p className="text-muted-foreground">読み込み中...</p>
-        </div>
-    );
-}
+        );
+    }
 
 
     return (
@@ -103,6 +131,7 @@ if (isLoading) {
             </div>
 
             <div className="flex-1 overflow-y-auto">
+
                 {likedActivities.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
                         <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center mb-6">
@@ -130,6 +159,12 @@ if (isLoading) {
                                 index={index}
                             />
                         ))}
+                        
+                        <InfiniteScrollSentinel
+                            onInteract={() => loadData(false)}
+                            hasMore={hasMore}
+                            isLoading={isLoadingMore}
+                        />
                     </div>
                 )}
             </div>

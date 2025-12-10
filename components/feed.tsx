@@ -3,6 +3,7 @@
 import type React from "react";
 
 import { useState, useEffect } from "react";
+import { InfiniteScrollSentinel } from "@/components/ui/infinite-scroll-sentinel";
 import { ActivityCard } from "./activity-card";
 import {
     fetchAllActivities,
@@ -49,15 +50,23 @@ export function Feed() {
         if (isInitial) {
             setIsLoading(true);
             setPage(1);
+            setActivities([]); // Clear previous activities
         } else {
             setIsLoadingMore(true);
         }
 
         const currentPage = isInitial ? 1 : page;
-        console.log(`Feed: loading activities page ${currentPage}`);
+        // mineタブでuserUUIDがない場合はロードしない（useEffectで待機）
+        if (activeTab === "mine" && !userUUID) {
+            setIsLoading(false);
+            return;
+        }
 
+        console.log(`Feed: loading activities page ${currentPage} for tab ${activeTab}`);
+
+        const filterUserId = activeTab === "mine" && userUUID ? userUUID : undefined;
         const { activities: newActivities, hasMore: more } =
-            await fetchActivitiesWithPagination(currentPage, PAGE_SIZE);
+            await fetchActivitiesWithPagination(currentPage, PAGE_SIZE, filterUserId);
 
         if (isInitial) {
             setActivities(newActivities);
@@ -90,6 +99,9 @@ export function Feed() {
     };
 
     useEffect(() => {
+        // userUUIDがまだ取得できていない場合、mineタブならロードを待機
+        if (activeTab === "mine" && !userUUID) return;
+        
         loadActivities(true);
 
         
@@ -107,14 +119,10 @@ export function Feed() {
                 "activityCreated",
                 handleActivityCreated
             );
-    }, [userId, userUUID]);
+    }, [userId, userUUID, activeTab]); // activeTab を依存配列に追加
 
-    
-
-    const filteredActivities =
-        activeTab === "all"
-            ? activities
-            : activities.filter((a) => a.userId === userUUID);
+    // フィルタリングはサーバーサイドで行うため、ここはそのまま表示
+    const filteredActivities = activities;
 
     const handleToggleLike = async (activityId: string) => {
         if (!userId) return;
@@ -206,27 +214,11 @@ export function Feed() {
                             />
                         ))}
                         
-                        {activeTab === "all" && hasMore && (
-                            <div className="flex justify-center mt-6">
-                                <button
-                                    onClick={() => loadActivities(false)}
-                                    disabled={isLoadingMore}
-                                    className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-secondary/80 hover:bg-secondary text-sm font-medium transition-colors disabled:opacity-50"
-                                >
-                                    {isLoadingMore ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            読み込み中...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <ChevronDown className="w-4 h-4" />
-                                            もっと読み込む
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        )}
+                        <InfiniteScrollSentinel
+                            onInteract={() => loadActivities(false)}
+                            hasMore={hasMore}
+                            isLoading={isLoadingMore}
+                        />
                     </div>
                 )}
             </div>
