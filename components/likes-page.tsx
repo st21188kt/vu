@@ -120,7 +120,7 @@ export function LikesPage() {
                 <div className="max-w-2xl mx-auto px-4 py-4">
                     <h1 className="text-lg font-bold flex items-center gap-2">
                         <Heart className="w-5 h-5 fill-pink-500 text-pink-500" />
-                        いいねされた投稿
+                        いいねされたアクティビティ
                         {likedActivities.length > 0 && (
                             <span className="text-sm font-normal text-muted-foreground">
                                 ({likedActivities.length})
@@ -138,10 +138,10 @@ export function LikesPage() {
                             <Heart className="w-12 h-12 text-muted-foreground/30" />
                         </div>
                         <p className="text-lg font-medium">
-                            いいねされた投稿はありません
+                            いいねされたアクティビティはありません
                         </p>
                         <p className="text-sm mt-2 text-center px-8">
-                            あなたの投稿がいいねされると表示されます
+                            あなたのアクティビティがいいねされると表示されます
                         </p>
                     </div>
                 ) : (

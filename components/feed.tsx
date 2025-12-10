@@ -104,6 +104,8 @@ export function Feed() {
         
         loadActivities(true);
 
+        
+
         // アクティビティ作成イベントをリスン
         const handleActivityCreated = () => {
             console.log("Activity created, reloading feed...");
@@ -223,3 +225,4 @@ export function Feed() {
         </div>
     );
 }
+
