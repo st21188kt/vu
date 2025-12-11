@@ -18,7 +18,7 @@ export function Navigation({ activeTab, onTabChange }: NavigationProps) {
             onClick={() => onTabChange("home")}
             className="flex items-center gap-2.5 hover:opacity-80 transition-all duration-300 group"
           >
-            <span className="text-2xl font-black tracking-tight gradient-instagram-text">NotPicky</span>
+            <span className="text-2xl font-black tracking-tight gradient-instagram-text">Ver.Unplugged</span>
           </button>
 
           <nav className="flex items-center gap-2">

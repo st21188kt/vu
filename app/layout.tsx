@@ -7,7 +7,7 @@ import "./globals.css"
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 
 export const metadata: Metadata = {
-  title: "NotPicky",
+  title: "VU",
   description: "アクティビティを提案SNSアプリ",
   generator: "v0.app",
   icons: {
